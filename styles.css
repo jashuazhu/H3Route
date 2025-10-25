@@ -1,0 +1,515 @@
+﻿:root {
+  --paper: #f7f3e9;
+  --page: #ffffff;
+  --ink: #1e1a17;
+  --muted: #655f58;
+  --accent: #7c4b2d;
+  --accent-light: #b37a52;
+  --heading-font: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  --body-font: 'Georgia', 'Times New Roman', serif;
+  --sans-font: 'Segoe UI', 'Gill Sans', 'Helvetica Neue', Arial, sans-serif;
+  --page-width: min(1520px, 90vw);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--body-font);
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.7;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.45), transparent 60%),
+              radial-gradient(circle at bottom, rgba(0, 0, 0, 0.04), transparent 55%);
+  pointer-events: none;
+  z-index: -2;
+}
+
+main.book-page {
+  max-width: var(--page-width);
+  margin: clamp(2.5rem, 5vw, 4rem) auto clamp(3rem, 6vw, 5rem);
+  background: var(--page);
+  padding: clamp(2.25rem, 5vw, 3rem) clamp(2rem, 6vw, 3.5rem);
+  box-shadow: 0 18px 40px rgba(30, 26, 23, 0.1), 0 4px 18px rgba(30, 26, 23, 0.08);
+  border-radius: 22px;
+  border: 1px solid rgba(124, 75, 45, 0.12);
+}
+
+header.book-header {
+  margin-bottom: 2rem;
+}
+
+header.book-header p.lead {
+  font-family: var(--sans-font);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.8rem;
+  color: var(--accent-light);
+  margin-bottom: 0.5rem;
+}
+
+h1, h2, h3, h4, h5 {
+  font-family: var(--heading-font);
+  color: var(--ink);
+  line-height: 1.25;
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(2rem, 3vw, 2.4rem);
+  margin-bottom: 0.75rem;
+}
+
+h2 {
+  font-size: clamp(1.5rem, 2.5vw, 1.9rem);
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+h3 {
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+p {
+  margin: 1rem 0;
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+strong {
+  color: var(--accent);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid rgba(101, 95, 88, 0.2);
+  margin: 2.5rem 0;
+}
+
+.chapter-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-family: var(--sans-font);
+  margin-bottom: 2rem;
+}
+
+.chapter-nav.bottom {
+  margin-top: 3rem;
+  margin-bottom: 0;
+}
+
+.chapter-nav a,
+.chapter-nav span {
+  flex: 1 1 30%;
+  min-width: 150px;
+  text-align: center;
+  padding: 0.65rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(124, 75, 45, 0.3);
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.chapter-nav a:hover,
+.chapter-nav a:focus-visible {
+  background: rgba(124, 75, 45, 0.08);
+  border-color: rgba(124, 75, 45, 0.5);
+  outline: none;
+}
+
+.center-text {
+  text-align: center;
+}
+
+.chapter-nav .index-link {
+  font-weight: 600;
+}
+
+.chapter-nav .disabled {
+  opacity: 0.4;
+  border-style: dashed;
+  cursor: default;
+}
+
+.chapter-nav .disabled:hover {
+  background: transparent;
+  border-color: rgba(124, 75, 45, 0.3);
+}
+
+a {
+  color: var(--accent);
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--accent-light);
+}
+
+ul, ol {
+  padding-left: 1.4rem;
+  margin: 1rem 0;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+blockquote {
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+  background: rgba(124, 75, 45, 0.06);
+  border-left: 4px solid rgba(124, 75, 45, 0.3);
+}
+
+footer.site-footer {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-family: var(--sans-font);
+  margin-top: 4rem;
+}
+
+footer.site-footer p {
+  margin: 0.5rem 0;
+}
+
+.table-of-contents {
+  margin-top: 1.5rem;
+}
+
+.table-of-contents ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: chapter;
+}
+
+.table-of-contents li {
+  counter-increment: chapter;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 14px;
+  border: 1px solid rgba(101, 95, 88, 0.18);
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.table-of-contents li span.chapter-number::before {
+  content: 'Chapter ' counter(chapter) ' - ';
+  font-family: var(--sans-font);
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--accent-light);
+  text-transform: uppercase;
+}
+
+.table-of-contents a {
+  text-decoration: none;
+  font-weight: 600;
+  font-family: var(--heading-font);
+  color: var(--ink);
+  transition: color 0.2s ease;
+}
+
+.table-of-contents a:hover,
+.table-of-contents a:focus-visible {
+  color: var(--accent);
+}
+
+.table-of-contents .placeholder {
+  font-style: italic;
+  color: var(--muted);
+}
+
+.table-of-contents li.placeholder {
+  background: rgba(244, 238, 229, 0.6);
+  border-style: dashed;
+}
+
+.grid {
+  display: grid;
+  gap: 2rem;
+  margin-top: 2rem;
+  grid-template-columns: 1fr;
+}
+
+section.card {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(124, 75, 45, 0.18);
+  border-radius: 18px;
+  padding: 1.75rem 1.85rem;
+  box-shadow: 0 10px 22px rgba(30, 26, 23, 0.05);
+}
+
+section.card h2 {
+  margin-top: 0;
+}
+
+.formula {
+  margin: 0.8rem 0 1.2rem;
+  font-size: 1.02rem;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.ex {
+  background: rgba(124, 75, 45, 0.06);
+  border: 1px dashed rgba(124, 75, 45, 0.3);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.97rem;
+  overflow-x: auto;
+  margin: 1rem 0 0.5rem;
+}
+
+ul.tight {
+  margin: 0.4rem 0 1.1rem 1.2rem;
+}
+
+section + section {
+  margin-top: 2.5rem;
+}
+
+.table-of-contents .chapter-entry {
+  flex: 1;
+  margin-left: 1rem;
+}
+
+.table-of-contents .chapter-entry p {
+  margin: 0.4rem 0 0;
+  font-size: 0.95rem;
+  font-family: var(--sans-font);
+  color: var(--muted);
+  text-align: left;
+  letter-spacing: 0.01em;
+}
+
+.table-of-contents li.placeholder .chapter-entry {
+  color: var(--muted);
+}
+
+figure {
+  margin: 2rem 0;
+}
+
+figcaption {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+  font-family: var(--sans-font);
+}
+
+@media (max-width: 640px) {
+  main.book-page {
+    margin: 1.5rem auto 2.5rem;
+    padding: 1.75rem 1.5rem 2.25rem;
+    border-radius: 18px;
+  }
+
+  .chapter-nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .chapter-nav a,
+  .chapter-nav span {
+    width: 100%;
+  }
+
+  p {
+    text-align: left;
+  }
+
+  .table-of-contents li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .table-of-contents li span.chapter-number::before {
+    display: block;
+  }
+}
+
+details {
+  margin: 1rem 0 1.2rem;
+  padding: 0.9rem 1rem 1rem;
+  background: rgba(124, 75, 45, 0.05);
+  border: 1px solid rgba(124, 75, 45, 0.16);
+  border-radius: 14px;
+}
+
+details summary {
+  cursor: pointer;
+  font-family: var(--sans-font);
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+}
+
+details[open] summary {
+  color: var(--accent-light);
+}
+
+details summary::marker {
+  display: none;
+}
+/* === Floating reference bar sizing overrides === */
+.content-grid{
+  grid-template-columns: minmax(72px, 8vw) minmax(50vw, 1fr);
+}
+aside.refs{
+  font-size: clamp(0.42rem, 0.35vw + 0.28rem, 0.64rem);
+  padding: .35rem .45rem;
+}
+.refs h2{
+  font-size: clamp(0.70rem, 0.45vw + 0.50rem, 0.95rem);
+}
+.ref-list li{ padding: .35rem .45rem; margin-bottom: .4rem; }
+
+/* Tunable variables */
+:root{
+  --refs-aside-min: 108px;        /* very narrow column (~5× smaller than before) */
+  --refs-aside-max: 10vw;         /* and still responsive */
+  --refs-stick-top: clamp(10px, 2vh, 18px);
+}
+
+/* Two-column layout ONLY when you opt in with .layout--with-refs */
+.content-grid.layout--with-refs{
+  display: grid;
+  grid-template-columns:
+    minmax(var(--refs-aside-min), var(--refs-aside-max))  /* left: slim refs */
+    minmax(50vw, 1fr);                                    /* right: main ≥ 50% */
+  gap: clamp(12px, 2vw, 24px);
+  align-items: start;
+}
+
+/* Sticky reference bar (left) */
+.content-grid.layout--with-refs > aside.refs{
+  position: sticky;
+  top: var(--refs-stick-top);
+  height: max-content;
+
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  padding: clamp(8px, 1vw, 12px);
+  /* ~2–3× smaller text than the original */
+  font-size: clamp(0.42rem, 0.35vw + 0.28rem, 0.64rem);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.05);
+}
+
+/* Reference bar headings and list */
+.content-grid.layout--with-refs > aside.refs h2{
+  margin: 0 0 .25rem 0;
+  font-size: clamp(0.70rem, 0.45vw + 0.50rem, 0.95rem);
+  line-height: 1.1;
+}
+.content-grid.layout--with-refs > aside.refs .sub{
+  margin: 0 0 .5rem 0;
+  color: #6b7280;
+  font-size: clamp(0.55rem, 0.35vw + 0.36rem, 0.75rem);
+}
+.content-grid.layout--with-refs > aside.refs .ref-list{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: calc(100vh - var(--refs-stick-top) - 3.2rem);
+  overflow: auto;
+}
+.content-grid.layout--with-refs > aside.refs .ref-list li{
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 9px;
+  padding: .35rem .45rem;
+  margin-bottom: .4rem;
+  background: #fff;
+}
+.content-grid.layout--with-refs > aside.refs .ref-list a{
+  text-decoration: none;
+  font-weight: 600;
+  color: #1f2937;
+  word-break: break-word;
+}
+.content-grid.layout--with-refs > aside.refs .ref-list a:hover,
+.content-grid.layout--with-refs > aside.refs .ref-list a:focus-visible{
+  color: #2563eb;
+  outline: none;
+}
+
+/* Optional: compact form inside the narrow sidebar */
+.content-grid.layout--with-refs > aside.refs .add-ref{
+  margin-top: .5rem;
+  padding-top: .5rem;
+  border-top: 1px dashed rgba(0,0,0,0.12);
+  font-size: .92em;
+}
+.content-grid.layout--with-refs > aside.refs .add-ref label{
+  display:block; margin:.25rem 0 .1rem;
+}
+.content-grid.layout--with-refs > aside.refs .add-ref input{
+  width: 100%;
+  padding: .35rem .45rem;
+  border: 1px solid rgba(0,0,0,0.18);
+  border-radius: 8px;
+  font: inherit;
+  box-sizing: border-box;
+}
+.content-grid.layout--with-refs > aside.refs .add-ref .row{
+  display:flex; gap:.35rem;
+}
+.content-grid.layout--with-refs > aside.refs .add-ref button{
+  padding: .35rem .55rem;
+  border-radius: 9px;
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.8em;
+}
+
+/* Mobile: stack; sidebar on top, full width */
+@media (max-width: 880px){
+  .content-grid.layout--with-refs{ grid-template-columns: 1fr; }
+  .content-grid.layout--with-refs > aside.refs{ position: static; max-height: none; }
+  .content-grid.layout--with-refs > aside.refs .ref-list{ max-height: none; }
+}
+
+/* --- Optional helper: right-side variant ---
+   Use .layout--refs-right to put the sidebar on the right (keeps main ≥ 50vw)
+*/
+.content-grid.layout--with-refs.layout--refs-right{
+  grid-template-columns:
+    minmax(50vw, 1fr)
+    minmax(var(--refs-aside-min), var(--refs-aside-max));
+}
+
+.bookmark { display:inline-block; margin: 1.25rem 0 0; padding:.6rem 1rem; border-radius:10px; text-decoration:none; background: var(--primary, #111827); color:#fff; }
+.bookmark:hover { filter: brightness(1.08); }
