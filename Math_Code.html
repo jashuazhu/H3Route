@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>H3-Route — Algorithm & Pseudocode</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="styles.css" rel="stylesheet" />
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(','\\)']],
+        displayMath: [['\\[','\\]']],
+        processEscapes: true
+      }
+    };
+  </script>
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    /* Helpers that should play nicely with styles.css */
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 1rem; align-items: start; }
+    figure { margin: 0; text-align: center; }
+    /* Normalize all figures: half of the container width and same max size */
+    figure img.normalized { width: 90%; max-width: 840px; height: auto; aspect-ratio: auto; display: inline-block; }
+    figure figcaption { font-size: .9rem; opacity: .85; margin-top: .35rem; }
+    table.metrics { border-collapse: collapse; width: 100%; margin-top: .5rem; }
+    .metrics th, .metrics td { border-bottom: 1px solid var(--border, #e5e7eb); padding: .45rem .6rem; text-align: left; }
+    .codefold details { border: 1px solid var(--border, #e5e7eb); border-radius: 10px; padding: .6rem .8rem; background: var(--card, #fff); }
+    .codefold summary { cursor: pointer; font-weight: 600; }
+    pre { overflow: auto; margin: .5rem 0 0; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: .9rem; }
+    .bookmark { display:inline-block; margin: 1.25rem 0 0; padding:.6rem 1rem; border-radius:10px; text-decoration:none; background: var(--primary, #111827); color:#fff; }
+    .bookmark:hover { filter: brightness(1.08); }
+  </style>  
+</head>
+<body>
+  <main class="book-page">
+    <!-- The algorithm: H3-Route -->
+    <section class="card" id="h3-route">
+      <h2 class="center-text">The algorithm: H3-Route</h2>
+      <p class="center-text"><em>(Hierarchical Hilbert + Horizon freezing + Heuristic regret search)</em></p>
+      <p class="center-text">By ZHU`s Group @JHU @ Groton School</p>
+
+      <p><strong>Intuition:</strong> Keep a <em>locality-preserving</em> global order using a space-filling curve (SFC) so inserts are cheap and routes stay short; bend that order via <em>priority-aware warping</em> and <em>bounded local search</em> to respect deadlines—without thrashing near-term commitments.</p>
+
+      <h3>Data structures</h3>
+      <ul>
+        <li><strong>3D Hilbert key</strong> \(h(x,y,\tau)\) where \(\tau = f(p, d - \text{now})\) encodes priority/urgency into a pseudo-time axis.</li>
+        <li><strong>Balanced order tree</strong> keyed by \(h\) (augmented skip-list or red-black tree) that stores the current route order.</li>
+        <li><strong>Prefix lock</strong> length \(F\): first \(F\) imminent stops are frozen for stability.</li>
+      </ul>
+
+  <details>
+      <summary>Hilbert Key \(D\): Combining Geometry, Priority, and Deadline</summary>
+
+  <p class="muted">
+    This note shows how to convert \((x,y,\text{priority},\text{deadline})\) into a single sortable
+    Hilbert key \(D\) for online routing.
+  </p>
+
+  <h3>1) Normalize geometry</h3>
+  <p>Given a fixed map bounding box \([x_{\min},x_{\max}]\times[y_{\min},y_{\max}]\), normalize to \([0,1)\):</p>
+  <div class="box">
+    \[
+      \bar x=\frac{x-x_{\min}}{x_{\max}-x_{\min}},\qquad
+      \bar y=\frac{y-y_{\min}}{y_{\max}-y_{\min}}.
+    \]
+  </div>
+
+  <h3>2) Priority &amp; deadline \(\rightarrow\) urgency \(u\in[0,1]\)</h3>
+  <p>
+    Let priority \(p\in\{1,2,3\}\) (1 = highest) with weights \(w(p)\) (e.g., \(w(1)=4,\ w(2)=2,\ w(3)=1\)).
+    With time-to-deadline \(\tau=d-t\) and a time scale \(T_0>0\) plus slope \(\alpha>0\), define:
+  </p>
+  <div class="box">
+    \[
+      u \;=\; \sigma\!\Big(\alpha\,w(p)\,\Big(-\frac{\tau}{T_0}\Big)\Big)
+      \;=\;\frac{1}{1+\exp\!\big(-\alpha\,w(p)\,(-\tau/T_0)\big)} \in (0,1).
+    \]
+  </div>
+  <p class="muted">No deadline? Set \(u\approx 0\) (or a small floor \(u_{\min}\)).</p>
+
+  <h3>3) Quantize to an integer grid</h3>
+  <p>Choose Hilbert order \(k\) so grid size \(N=2^k\). Quantize:</p>
+  <div class="box">
+    \[
+      X=\big\lfloor N\,\bar x\big\rfloor,\quad
+      Y=\big\lfloor N\,\bar y\big\rfloor,\quad
+      U=\big\lfloor N\,u\big\rfloor,\qquad
+      X,Y,U\in\{0,\ldots,N-1\}.
+    \]
+  </div>
+
+  <h3>4) 3D Hilbert index (combined key)</h3>
+  <p>
+    Let \(H^{(k)}:\{0,\ldots,N-1\}^3\to\{0,\ldots,N^3-1\}\) be the 3D Hilbert mapping. The combined key is:
+  </p>
+  <div class="box">
+    \[
+      \boxed{\,D \;=\; H^{(k)}(X,\,Y,\,U)\,}
+    \]
+  </div>
+  <p>
+    Sorting requests by \(D\) yields a **locality-preserving, urgency-aware** backbone order.
+    Our online heuristic then evaluates only a small neighborhood around each new request’s \(D\) for
+    \(k\)-edge regret insertion (bounded latency).
+  </p>
+
+  <h3>Variant: 2D + urgency warp (lighter to implement)</h3>
+  <p>Compute a 2D Hilbert key \(G=H^{(k)}_{2D}(X,Y)\in[0,N^2-1]\). Then apply an urgency shift:</p>
+  <div class="box">
+    \[
+      \boxed{\,D \;=\; G \;-\; \beta\;\big\lfloor N\,u\big\rfloor\cdot N\,},\qquad \beta\in(0,1].
+    \]
+  </div>
+  <p>Higher \(u\) (more urgent) pulls a job earlier in the total order while mostly preserving geometric adjacency.</p>
+
+  <h3>Complexity (keys &amp; ordering)</h3>
+  <ul>
+    <li>Key computation per point: \(\mathcal{O}(1)\).</li>
+    <li>Sorting once: \(\mathcal{O}(n\log n)\).</li>
+    <li>Online insertion in our heuristic: probe only \(k\) neighbors by \(D\) and score regret \(\Rightarrow\) near-constant per insert.</li>
+  </ul>
+
+  </details>
+
+      <h3>Online insertion (on each new request \(r\))</h3>
+      <ol>
+        <li><strong>Compute Hilbert key</strong> \(h_r\).</li>
+        <li><strong>Neighborhood probe:</strong> find predecessor/successor in the order tree and collect \(k\) nearby candidate edges \((u,v)\).</li>
+        <li><strong>Priority-aware regret score</strong> for inserting \(r\) between \((u,v)\):<br/>
+          \[
+          \Delta J \,=\, \lambda\,\big( d(u,r)+d(r,v)-d(u,v) \big)
+          \, + \, \mu\, w(p_r)\,\big[ \,\widehat{\mathrm{ETA}}_{r}(u,v) - d_r \,\big]_{+}
+          \, + \, \gamma\,\mathrm{disruption}(u,v)
+          \]
+          <p class="muted">where <em>disruption</em> penalizes edits inside the frozen prefix.</p>
+        </li>
+
+
+        <details>
+            <summary>A. Priority-aware regret score (ΔJ)</summary>
+
+<p>We score inserting a new request \(r\) <em>between</em> two consecutive stops \((u,v)\) in the current route (with \(u=-1\) meaning “start/depot/current pose”). The objective balances <strong>distance/energy</strong>, <strong>priority-weighted lateness</strong>, and <strong>stability</strong>:</p>
+
+\[ 
+\boxed{
+\Delta J(u,r,v)=
+\underbrace{\lambda\big(d(u,r)+d(r,v)-d(u,v)\big)}_{\text{added travel/energy}}
+\;+\;
+\underbrace{\mu\,w(p_r)\,[\,\widehat{\mathrm{ETA}}_r(u,v)-d_r\,]_+}_{\text{lateness of }r}
+\;+\;
+\underbrace{\gamma\,\mathrm{disruption}(u,v;F)}_{\text{stability penalty}}
+}
+\]
+
+<h3>Terms &amp; how to compute them</h3>
+
+<ol>
+  <li>
+    <p><strong>Added travel/energy (distance term).</strong> \(d(\cdot,\cdot)\) is your effective cost metric (Euclidean, corridor-aware shortest-path, or energy). If using time, replace \(d\) by \(t\); if using energy, use edge energies \(E(\cdot,\cdot)\) and tune \(\lambda\) accordingly.</p>
+  </li>
+
+  <li>
+    <p><strong>Priority-weighted lateness for \(r\).</strong> Priority \(p_r\) uses weights \(w(p_r)\) (e.g., \(w(\mathrm{P1})=4, w(\mathrm{P2})=2, w(\mathrm{P3})=1\)). Let \(d_r\) be the deadline (latest service time). The predicted arrival to \(r\) if inserting between \((u,v)\) is</p>
+    \[
+      \widehat{\mathrm{ETA}}_r(u,v)=\mathrm{ETA}_u + s_u + t(u,r),
+    \]
+    <p>where \(\mathrm{ETA}_u\) is the scheduled arrival to \(u\) (or current time if \(u=-1\)) and \(s_u\) is the service time at \(u\). The operator \([x]_+=\max\{x,0\}\) charges cost only when late.</p>
+    <p><em>Optional spillover protection for downstream nodes:</em></p>
+    \[
+      \mu'\sum_{j\in\mathrm{suffix}(v)}\big[\,\mathrm{ETA}'_j-\mathrm{ETA}_j\,\big]_+\cdot \mathbf{1}\{\,\mathrm{ETA}'_j>d_j\,\},
+    \]
+    <p>with \(\mathrm{ETA}'_j\) the post-insertion ETA.</p>
+  </li>
+
+  <li>
+    <p><strong>Stability penalty (disruption).</strong> We discourage edits inside the frozen prefix of length \(F\):</p>
+    \[
+    \mathrm{disruption}(u,v;F)=
+    \begin{cases}
+      1+\rho\,\dfrac{F-1-i}{F}, & \text{if edge index } i < F-1,\\[6pt]
+      0, & \text{otherwise,}
+    \end{cases}
+    \]
+    <p>where \(i\) is the index of \(u\) in the route and \(\rho\in[0,1]\) ramps the penalty near the head.</p>
+  </li>
+</ol>
+
+<h3>Choosing weights</h3>
+<ul>
+  <li>\(\lambda\): scales travel/energy; \(\mu\): enforces priority/deadlines; \(\gamma\): protects stability.</li>
+  <li>Tune via service targets (e.g., require \(\text{P1 lateness P95}=0\)); increase \(\mu\) or urgency warp until met without excessive added distance.</li>
+  <li>Keep units consistent (time in minutes, energy in Wh, etc.).</li>
+</ul>
+
+<h3>Fast ETA updates (so \(\Delta J\) stays cheap)</h3>
+<p>Maintain prefix/suffix summaries (cumulative travel, service time, slack \(S_j=d_j-\mathrm{ETA}_j\)). For a candidate \((u,v)\), the downstream shift is</p>
+
+\[
+\Delta T = t(u,r)+s_r+t(r,v)-t(u,v).
+\]
+
+<p>Use the minimum suffix slack to early-exit: if \(\Delta T > \min_{j\in\mathrm{suffix}(v)} S_j\), downstream windows will be violated upon insertion.</p>
+        </details>
+
+        <li><strong>Feasibility check:</strong> battery/time windows/corridors; if infeasible, either (i) schedule a micro-charge stop (treated as a node) and re-score, or (ii) trigger <em>split-tour</em> (decompose into subtours if multi-vehicle).</li>
+        <li><strong>Choose minimal</strong> \(\Delta J\) and commit insertion. <em>Complexity:</em> \(O(\log n + k)\).</li>
+      </ol>
+
+      <h3>Receding-horizon improvement (every \(\tau\) seconds or every \(m\) inserts)</h3>
+      <ul>
+        <li>Run <strong>bounded local search</strong> on a window of size \(S\) around the last few insertions: 2-opt, 3-opt, Or-opt (relocate/2-exchange). Time-cap the LS (e.g., 5–10 ms).</li>
+        <li><strong>Priority warping update:</strong> adapt \(\tau\) scaling so imminently late, high-priority nodes migrate forward in SFC order.</li>
+        <li><strong>Freeze policy:</strong> adapt \(F\) with arrival rate; higher rates → longer freeze to prevent thrash.</li>
+      </ul>
+
+      <h3>Multi-vehicle extension (optional)</h3>
+      <p>Maintain a <strong>Voronoi-like partition</strong> in Hilbert space. New request prefers the vehicle whose marginal \(\Delta J\) (including dispatch delay) is smallest; allow handoff if a neighbor’s \(\Delta J\) is better by a margin \(\eta\).</p>
+
+      <h3>Why this works</h3>
+      <ul>
+        <li><strong>Locality guarantee</strong> of SFCs keeps baseline tour length competitive with good TSP heuristics on static snapshots.</li>
+        <li><strong>Regret insertion</strong> targets edges with maximum marginal upside.</li>
+        <li><strong>Priority warp</strong> yields a <em>soft</em> partial order: urgent nodes bubble up without global recompute.</li>
+        <li><strong>Horizon freezing</strong> bounds instability—crucial for real robots/drones.</li>
+      </ul>
+    </section>
+
+    <!-- Pseudocode (compressed) -->
+    <details>
+    <summary>Pseudocode (compressed)</summary>    
+      <pre class="ex"><code>function H3_ROUTE_ON_INSERT(r):
+    h_r ← HILBERT3D(x_r, y_r, urgency(p_r, d_r))
+    (pred, succ) ← ORDER_TREE.neighbors(h_r)
+    C ← candidate_edges(pred, succ, k)
+    best ← (∞, ⊥)
+    for (u,v) in C:
+        if not FEASIBLE_INSERT(u,r,v): continue
+        delta ← λ*(d(u,r)+d(r,v)-d(u,v))
+               + μ*w(p_r)*latenessETA(u,r,v,d_r)
+               + γ*disruption(u,v; F)
+        if delta &lt; best.cost: best ← (delta,(u,v))
+    if best.edge == ⊥:
+        handle_infeasible(r)  // charge stop or split-tour
+    else:
+        ORDER_TREE.insert_between(r, best.edge)
+
+periodic IMPROVE():
+    W ← affected_segment(S)
+    two_opt_three_opt_oropt(W, time_budget=10ms)
+    adapt_freeze(F), adapt_warp_scaling()</code></pre>
+    </details> 
+    <details>
+        <summary>Simulations results</summary>
+        <div class="grid-2">
+        <figure>
+          <img class="normalized" src="assets/simple_1.png" alt="comparison" />
+          <figcaption>Fig. A. comparison of distance efficiency.</figcaption>
+        </figure>
+        <figure>
+          <img class="normalized" src="assets/simple_2.png" alt="comparison" />
+          <figcaption>Fig. B. comparison of priority efficiency.</figcaption>
+        </figure>
+      </div>
+      <div class="grid-2">
+        <figure>
+          <img class="normalized" src="assets/priority_output1.png" alt="comparison" />
+          <figcaption>Fig. C. comparison of 95% deadline efficiency.</figcaption>
+        </figure>
+        <figure>
+          <img class="normalized" src="assets/priority_output2.png" alt="comparison" />
+          <figcaption>Fig. D. comparison of 99% deadline efficiency.</figcaption>
+        </figure>
+      </div>
+    </details>
+    <footer class="site-footer">
+      <a class="bookmark" href="index.html" title="Return">Return ▶ Main</a>
+      <p style="margin-top:.6rem;">© H3Route</p>
+    </footer>
+  </main>
+</body>
+</html>
